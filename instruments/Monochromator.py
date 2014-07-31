@@ -128,12 +128,14 @@ class Monochromator(Instrument):
     def do_set_wavelength(self, wavelength):
         logging.debug(__name__ + 'setting wavelength')
         self.buffer_clear()
-        wl_speed = self.get_wavelength_speed()
-        cur_wl = self.get_wavelength()
-        tgt_wl = wavelength
-        est_time = np.abs(cur_wl-tgt_wl)/wl_speed*60.0
-        self._visa.write('%.3f NM' % wavelength)
-        time.sleep(est_time + 2.0)
+        i = 0
+        while True:
+            time.sleep(1.0)
+            i = i+1
+            if pyvisa.vpp43.get_attribute(self._visa.vi, pyvisa.vpp43.VI_ATTR_ASRL_AVAIL_NUM) == "0L":
+                break
+            if i > 60:
+                break
         self.buffer_clear()
         final_wl = self.get_wavelength()
         if np.abs(final_wl-tgt_wl) < 0.1:
